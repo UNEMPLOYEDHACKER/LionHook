@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Gallery - LionHook V1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff6b00;
+            --secondary: #00ff88;
+            --accent: #0099ff;
+            --dark: #0a0a0a;
+            --darker: #050505;
+            --light: #ffffff;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--glass);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .logo .version {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .logo .developer {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .logo .lion-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin: 15px 0;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: var(--glass);
+            border-color: var(--primary);
+            transform: translateX(10px);
+        }
+
+        .nav-links a.active {
+            background: var(--glass);
+            border-color: var(--primary);
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
+            flex: 1;
+        }
+
+        .gallery-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .device-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .device-id {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .device-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+
+        .status-offline {
+            background: rgba(102, 102, 102, 0.2);
+            color: #999;
+            border: 1px solid #666;
+        }
+
+        .device-info {
+            margin-bottom: 20px;
+        }
+
+        .device-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .device-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-data i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <div class="lion-icon">🦁</div>
+            <h1>LIONHOOK</h1>
+            <div class="version">VERSION 1.0</div>
+            <div class="developer">Developer: @ondork</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/gallery" class="active"><i class="fas fa-images"></i> Data Gallery</a></li>
+            <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="gallery-title"><i class="fas fa-images"></i> Data Gallery</h1>
+        
+        <div class="devices-grid">
+            {% for device in devices %}
+            <div class="device-card">
+                <div class="device-header">
+                    <div class="device-id">#{{ device[0][:12] }}</div>
+                    <div class="device-status {% if device[3] == 'online' %}status-online{% else %}status-offline{% endif %}">
+                        {{ device[3]|upper }}
+                    </div>
+                </div>
+                
+                <div class="device-info">
+                    <p><i class="fas fa-ip"></i> <strong>IP:</strong> {{ device[1] }}</p>
+                    <p><i class="fas fa-desktop"></i> <strong>Agent:</strong> {{ device[2][:50] }}...</p>
+                    <p><i class="fas fa-database"></i> <strong>Data Items:</strong> {{ device[4] }}</p>
+                </div>
+                
+                <div class="device-stats">
+                    <div class="stat">
+                        <div class="stat-value">{{ device[4] }}</div>
+                        <div class="stat-label">Total Files</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">{{ device[3][:1]|upper }}</div>
+                        <div class="stat-label">Status</div>
+                    </div>
+                </div>
+                
+                <a href="/device_gallery/{{ device[0] }}" class="btn">
+                    <i class="fas fa-folder-open"></i> View All Data
+                </a>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-database"></i>
+                <h3>No Data Available</h3>
+                <p>No devices have been hooked yet. Generate a hook from the dashboard to start collecting data.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

