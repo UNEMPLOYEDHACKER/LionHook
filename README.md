@@ -137,11 +137,16 @@ To access LionHook from other devices on your network or over the internet:
 2. Router Configuration
 
 · Access your router admin panel (usually 192.168.1.1)
+
 · Find "Port Forwarding" or "Virtual Servers" section
+
 · Add rule: External Port 5000 → Internal Port 5000 → Your Local IP
+
 · Protocol: TCP
 
+
 3. Firewall Configuration
+   
 
 ```bash
 # Linux/macOS
