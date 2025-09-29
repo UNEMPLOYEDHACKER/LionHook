@@ -66,19 +66,38 @@ mkdir -p templates static data/devices
 
 🎯 Usage Guide
 
-Starting the Application
-
-Linux/macOS/Termux:
+Set File Permissions :
 
 ```bash
-./start.sh
+chmod +x  start_termux.sh start_linux.sh start_macos.sh
+```
+
+Platform-wise Usage:
+
+Termux:
+
+```bash
+./start_termux.sh
+```
+
+Linux:
+
+```bash
+./start_linux.sh
+```
+
+macOS:
+
+```bash
+./start_macos.sh
 ```
 
 Windows:
 
 ```bat
-start.bat
+window.bat
 ```
+
 
 Access Points
 
