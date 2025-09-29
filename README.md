@@ -328,8 +328,12 @@ Logs & Debugging
 · Data stored in data/devices/ directory
 
 🤝 Support
+➢ 𝙎𝙋𝙀𝘾𝙄𝘼𝙇 𝙏𝙃𝘼𝙉𝙆𝙎 - [𝙏𝙊𝙕𝙄 𝙎𝙄𝙍](https://t.me/Nexaq)
 
-· Developer: @Akhand_Aryavart
-· Issues: GitHub Issues page
-· Documentation: This README
+       ╔═════════════════╗
+       ║    𝙁𝙊𝙐𝙉𝘿 𝙐𝙎𝙀      ║
+       ║۞𝘼𝙆𝙃𝘼𝙉𝘿 𝘼𝙍𝙔𝘼𝙑𝘼𝙍𝙏۞ ║
+       ╚═════════════════╝
+
+[𝙏𝙀𝙇𝙀𝙂𝙍𝘼𝙈](https://t.me/Akhand_aryavart) [𝙄𝙉𝙎𝙏𝘼𝙂𝙍𝘼𝙈](https://www.instagram.com/unemploid_hacker?igsh=MWRyeWd4Z2JjdnN3aQ==) [𝙂𝙄𝙏𝙃𝙐𝘽](https://github.com/UNEMPLOYEDHACKER)
 
