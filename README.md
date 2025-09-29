@@ -215,13 +215,19 @@ https://your-server.com/hook/YOUR_HOOK_ID
 
 Available Commands
 
-· 📍 Get Location - GPS and IP-based location
-· 📷 Front/Back Camera - Photo capture
-· 🎤 Record Audio - 10-second recording
-· 🔋 Battery Info - Battery status and level
-· 📡 Network Info - Connection details
-· 💻 System Info - Device specifications
-· 📚 Browser History - Navigation data
+1· 📍 Get Location - GPS and IP-based location
+
+2· 📷 Front/Back Camera - Photo capture
+
+3· 🎤 Record Audio - 10-second recording
+
+4· 🔋 Battery Info - Battery status and level
+
+5· 📡 Network Info - Connection details
+
+6· 💻 System Info - Device specifications
+
+7· 📚 Browser History - Navigation data
 
 🗂️ File Structure
 
