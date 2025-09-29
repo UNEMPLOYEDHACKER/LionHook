@@ -234,14 +234,6 @@ Available Commands
 ```
 lionhook/
 ├── install.sh
-├── key.pem
-├── lionhook
-│   ├── cert.pem
-│   ├── data
-│   │   └── devices
-│   ├── key.pem
-│   ├── static
-│   └── templates
 ├── lionhook.db
 ├── main.py
 ├── requirements.txt
@@ -272,40 +264,62 @@ LionHook is developed for:
 
 Prohibited uses:
 
+
 · Unauthorized access to systems
+
 · Illegal surveillance
+
 · Malicious activities
+
 · Privacy violations
+
 
 Users are solely responsible for:
 
 · Obtaining proper authorization
+
 · Complying with local laws
+
 · Ethical usage of the tool
+
 
 🐛 Troubleshooting
 
 Common Issues
 
+
 1. Port 5000 not accessible
    · Check firewall settings
    · Verify port forwarding
    · Ensure no other service uses port 5000
+
 2. SSL certificate errors
+
    · Regenerate certificates: rm cert.pem key.pem && ./start.sh
-   · Accept self-signed certificate in browser
-3. Dependencies issues
-   · Reinstall: pip3 install -r requirements.txt
+
+    · Accept self-signed certificate in browser
+
+4. Dependencies issues
+
+    · Reinstall: pip3 install -r requirements.txt
+ 
    · Update Python: python3 -m pip install --upgrade pip
-4. Hook not working
-   · Check browser console for errors
+
+6. Hook not working
+
+    · Check browser console for errors
+ 
    · Verify HTTPS connection
+ 
    · Ensure device has internet access
 
 Logs & Debugging
 
+
 · Check terminal output for server logs
+
 · Browser Developer Tools for client-side issues
+
 · Data stored in data/devices/ directory
 
 🤝 Support
