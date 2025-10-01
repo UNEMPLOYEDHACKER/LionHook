@@ -335,5 +335,13 @@ Logs & Debugging
        ║۞𝘼𝙆𝙃𝘼𝙉𝘿 𝘼𝙍𝙔𝘼𝙑𝘼𝙍𝙏۞ ║
        ╚═════════════════╝
 
+
+## 💖 Support This Project  
+
+[![Donate Bitcoin](https://img.shields.io/badge/Donate-Bitcoin-orange?logo=bitcoin)](bitcoin:1FxxtKyC6Ta1oaeXY3xsKmvZSnZEN8UzTv)
+
+**BTC Address:** `1FxxtKyC6Ta1oaeXY3xsKmvZSnZEN8UzTv`
+**USDT(TRON/TRC20):**  `TD7LDcz6RZ75vWc2u7uGhK4iqfaXXnGBky
+`
 [𝙏𝙀𝙇𝙀𝙂𝙍𝘼𝙈](https://t.me/Akhand_aryavart) [𝙄𝙉𝙎𝙏𝘼𝙂𝙍𝘼𝙈](https://www.instagram.com/unemploid_hacker?igsh=MWRyeWd4Z2JjdnN3aQ==) [𝙂𝙄𝙏𝙃𝙐𝘽](https://github.com/UNEMPLOYEDHACKER)
 
